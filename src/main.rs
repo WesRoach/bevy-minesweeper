@@ -7,9 +7,13 @@ use bevy::{
 const WINDOW_HEIGHT: f32 = 400.0;
 const WINDOW_WIDTH: f32 = 400.0;
 
-const COLUMN_COUNT: usize = 64;
-const ROW_COUNT: usize = 64;
-const MINE_COUNT: usize = 16;
+const COLUMN_COUNT: usize = 20;
+const ROW_COUNT: usize = 20;
+const MINE_COUNT: usize = 10;
+
+const GAP_BETWEEN_CELLS: f32 = 2.0;
+
+const MINE_COLOR: Color = Color::rgb(0.5, 0.5, 1.0);
 
 fn main() {
     App::new()
@@ -34,7 +38,7 @@ fn main() {
             LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin,
         ))
-        .add_systems(Startup, setup_camera)
+        .add_systems(Startup, (setup_camera, setup_board))
         .run();
 }
 
@@ -43,13 +47,7 @@ fn main() {
 struct Camera;
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera2dBundle {
-            transform: Transform::from_xyz(100.0, 200.0, 0.0),
-            ..Default::default()
-        },
-        Camera,
-    ));
+    commands.spawn((Camera2dBundle::default(), Camera));
 }
 
 // The board is a grid of cells
@@ -68,20 +66,26 @@ enum CellState {
 }
 
 // Initialize Minesweeper board
-fn setup_board(mut Commands: Commands) {
+fn setup_board(mut commands: Commands) {
     // Meshes and Materials
 
     // Create a grid of cells
     for row in 0..ROW_COUNT {
         for column in 0..COLUMN_COUNT {
-            Commands.spawn((
+            commands.spawn((
+                SpriteBundle {
+                    sprite: Sprite {
+                        color: MINE_COLOR,
+                        ..Default::default()
+                    },
+                    transform: Transform::from_xyz(column as f32 * 20.0, row as f32 * 20.0, 0.0),
+                    ..Default::default()
+                },
                 Cell {
                     is_mine: false,
                     state: CellState::Hidden,
                     adjacent_mines: 0,
                 },
-                Transform::from_xyz(column as f32 * 50.0, row as f32 * 50.0, 0.0),
-                GlobalTransform::default(),
             ));
         }
     }
