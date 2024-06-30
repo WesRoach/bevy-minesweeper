@@ -71,6 +71,13 @@ struct Cell {
     is_mine: bool,
     state: CellState,
     adjacent_mines: u8, // Number of adjacent mines
+    position: Position,
+}
+
+#[derive(Component)]
+struct Position {
+    x: f32,
+    y: f32,
 }
 
 enum CellState {
@@ -86,6 +93,9 @@ fn setup_board(mut commands: Commands) {
     // Create a grid of cells
     for row in 0..ROW_COUNT {
         for column in 0..COLUMN_COUNT {
+            let x_position = column as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS);
+            let y_position = row as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS);
+
             commands.spawn((
                 SpriteBundle {
                     sprite: Sprite {
@@ -93,11 +103,7 @@ fn setup_board(mut commands: Commands) {
                         ..Default::default()
                     },
                     transform: Transform {
-                        translation: Vec3::new(
-                            column as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS),
-                            row as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS),
-                            0.0,
-                        ),
+                        translation: Vec3::new(x_position, y_position, 0.0),
                         scale: Vec3::splat(CELL_SIZE),
                         ..Default::default()
                     },
@@ -107,6 +113,10 @@ fn setup_board(mut commands: Commands) {
                     is_mine: false,
                     state: CellState::Hidden,
                     adjacent_mines: 0,
+                    position: Position {
+                        x: x_position,
+                        y: y_position,
+                    },
                 },
             ));
         }
