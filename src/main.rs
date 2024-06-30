@@ -9,10 +9,12 @@ const WINDOW_WIDTH: f32 = 400.0;
 
 const COLUMN_COUNT: usize = 20;
 const ROW_COUNT: usize = 20;
+const GAP_BETWEEN_CELLS: f32 = 2.0;
+const CELL_SIZE: f32 =
+    (WINDOW_HEIGHT - (GAP_BETWEEN_CELLS * (ROW_COUNT as f32))) / ROW_COUNT as f32;
+// const CELL_SIZE: f32 = (WINDOW_HEIGHT / ROW_COUNT as f32);
+
 const MINE_COUNT: usize = 10;
-
-// const GAP_BETWEEN_CELLS: f32 = 2.0;
-
 const MINE_COLOR: Color = Color::rgb(0.5, 0.5, 1.0);
 
 fn main() {
@@ -35,7 +37,7 @@ fn main() {
                 }),
                 ..Default::default()
             }),
-            LogDiagnosticsPlugin::default(),
+            // LogDiagnosticsPlugin::default(),
             FrameTimeDiagnosticsPlugin,
         ))
         .add_systems(Startup, (setup_camera, setup_board))
@@ -47,9 +49,10 @@ fn main() {
 struct Camera;
 
 fn setup_camera(mut commands: Commands) {
-    // Determine Camera focus/offset
-    let x = (WINDOW_WIDTH / 2.0) - (WINDOW_WIDTH / COLUMN_COUNT as f32 / 2.0);
-    let y = (WINDOW_HEIGHT / 2.0) - (WINDOW_HEIGHT / ROW_COUNT as f32 / 2.0);
+    // Center Camera on the center of the mines
+    // All mines should be visible in the camera
+    let x = ((COLUMN_COUNT as f32 * (WINDOW_WIDTH / COLUMN_COUNT as f32)) / 2.0) - CELL_SIZE / 2.0;
+    let y = ((ROW_COUNT as f32 * (WINDOW_HEIGHT / ROW_COUNT as f32)) / 2.0) - CELL_SIZE / 2.0;
     let z = 1.0;
 
     commands.spawn((
@@ -91,13 +94,11 @@ fn setup_board(mut commands: Commands) {
                     },
                     transform: Transform {
                         translation: Vec3::new(
-                            (column as f32 * (WINDOW_WIDTH / COLUMN_COUNT as f32)),
-                            // + (GAP_BETWEEN_CELLS * column as f32),
-                            (row as f32 * (WINDOW_HEIGHT / ROW_COUNT as f32)),
-                            // + (GAP_BETWEEN_CELLS * row as f32),
+                            column as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS),
+                            row as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS),
                             0.0,
                         ),
-                        scale: Vec3::splat(WINDOW_WIDTH / COLUMN_COUNT as f32),
+                        scale: Vec3::splat(CELL_SIZE),
                         ..Default::default()
                     },
                     ..Default::default()
