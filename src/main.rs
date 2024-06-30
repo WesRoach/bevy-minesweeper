@@ -16,7 +16,7 @@ const CELL_SIZE: f32 =
 // const CELL_SIZE: f32 = (WINDOW_HEIGHT / ROW_COUNT as f32);
 
 const MINE_COUNT: usize = 10;
-const MINE_COLOR: Color = Color::rgb(0.5, 0.5, 1.0);
+const MINE_COLOR: Color = Color::rgb(0.5, 0.5, 0.5);
 
 fn main() {
     App::new()
@@ -89,11 +89,26 @@ enum CellState {
     Flagged,
 }
 
+#[derive(Component)]
+struct Mine;
+
 // Initialize Minesweeper board
 fn setup_board(mut commands: Commands) {
-    // Meshes and Materials
+    // Create vector of mines (bool)
+    let mut mine_positions: Vec<bool> = vec![false; ROW_COUNT * COLUMN_COUNT];
+
+    let mut mines: usize = 0;
+    while mines < MINE_COUNT {
+        let mine_position = rand::random::<usize>() % (ROW_COUNT * COLUMN_COUNT);
+        if !mine_positions[mine_position] {
+            mine_positions[mine_position] = true;
+            mines += 1;
+            println!("Mine position: {}", mine_position);
+        }
+    }
 
     // Create a grid of cells
+    let mut cell: usize = 0;
     for row in 0..ROW_COUNT {
         for column in 0..COLUMN_COUNT {
             let x_position = column as f32 * (CELL_SIZE + GAP_BETWEEN_CELLS);
@@ -113,7 +128,7 @@ fn setup_board(mut commands: Commands) {
                     ..Default::default()
                 },
                 Cell {
-                    is_mine: false,
+                    is_mine: mine_positions[cell].clone(),
                     state: CellState::Hidden,
                     adjacent_mines: 0,
                     position: Position {
@@ -122,6 +137,13 @@ fn setup_board(mut commands: Commands) {
                     },
                 },
             ));
+
+            if mine_positions[cell] {
+                println!("Created Mine @ ({}, {})", x_position, y_position);
+            }
+
+            // Iterate current cell index
+            cell += 1;
         }
     }
 }
