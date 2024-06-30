@@ -1,7 +1,8 @@
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    input::{mouse::MouseButtonInput, ButtonState},
     prelude::*,
-    window::{PresentMode, WindowTheme},
+    window::{PresentMode, PrimaryWindow, WindowTheme},
 };
 
 const WINDOW_HEIGHT: f32 = 400.0;
@@ -41,12 +42,14 @@ fn main() {
             FrameTimeDiagnosticsPlugin,
         ))
         .add_systems(Startup, (setup_camera, setup_board))
+        .add_event::<MouseButtonInput>()
+        .add_systems(Update, mouse_button_events)
         .run();
 }
 
 // Marker Component tracking the Camera
 #[derive(Component)]
-struct Camera;
+struct MainCamera;
 
 fn setup_camera(mut commands: Commands) {
     // Center Camera on the center of the mines
@@ -60,7 +63,7 @@ fn setup_camera(mut commands: Commands) {
             transform: Transform::from_xyz(x, y, z),
             ..Default::default()
         },
-        Camera,
+        MainCamera,
     ));
 }
 
@@ -119,6 +122,41 @@ fn setup_board(mut commands: Commands) {
                     },
                 },
             ));
+        }
+    }
+}
+
+// Emit a mouse left and/or right click event and capture the position of the mouse
+fn mouse_button_events(
+    mut mousebtn_event: EventReader<MouseButtonInput>, // query to get the window (so we can read the current cursor position)
+    q_window: Query<&Window, With<PrimaryWindow>>,
+    // query to get camera transform
+    q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+) {
+    for ev in mousebtn_event.read() {
+        match ev.state {
+            ButtonState::Pressed => {
+                println!("Mouse button press: {:?}", ev.button);
+            }
+            ButtonState::Released => {
+                println!("Mouse button release: {:?}", ev.button);
+            }
+        }
+        // get the camera info and transform
+        // assuming there is exactly one main camera entity, so Query::single() is OK
+        let (camera, camera_transform) = q_camera.single();
+
+        // There is only one primary window, so we can similarly get it from the query:
+        let window = q_window.single();
+
+        // check if the cursor is inside the window and get its position
+        // then, ask bevy to convert into world coordinates, and truncate to discard Z
+        if let Some(world_position) = window
+            .cursor_position()
+            .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor))
+            .map(|ray| ray.origin.truncate())
+        {
+            println!("World coords: {}/{}", world_position.x, world_position.y);
         }
     }
 }
