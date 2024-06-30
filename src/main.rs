@@ -11,7 +11,7 @@ const COLUMN_COUNT: usize = 20;
 const ROW_COUNT: usize = 20;
 const MINE_COUNT: usize = 10;
 
-const GAP_BETWEEN_CELLS: f32 = 2.0;
+// const GAP_BETWEEN_CELLS: f32 = 2.0;
 
 const MINE_COLOR: Color = Color::rgb(0.5, 0.5, 1.0);
 
@@ -47,7 +47,18 @@ fn main() {
 struct Camera;
 
 fn setup_camera(mut commands: Commands) {
-    commands.spawn((Camera2dBundle::default(), Camera));
+    // Determine Camera focus/offset
+    let x = (WINDOW_WIDTH / 2.0) - (WINDOW_WIDTH / COLUMN_COUNT as f32 / 2.0);
+    let y = (WINDOW_HEIGHT / 2.0) - (WINDOW_HEIGHT / ROW_COUNT as f32 / 2.0);
+    let z = 1.0;
+
+    commands.spawn((
+        Camera2dBundle {
+            transform: Transform::from_xyz(x, y, z),
+            ..Default::default()
+        },
+        Camera,
+    ));
 }
 
 // The board is a grid of cells
@@ -78,7 +89,17 @@ fn setup_board(mut commands: Commands) {
                         color: MINE_COLOR,
                         ..Default::default()
                     },
-                    transform: Transform::from_xyz(column as f32 * 20.0, row as f32 * 20.0, 0.0),
+                    transform: Transform {
+                        translation: Vec3::new(
+                            (column as f32 * (WINDOW_WIDTH / COLUMN_COUNT as f32)),
+                            // + (GAP_BETWEEN_CELLS * column as f32),
+                            (row as f32 * (WINDOW_HEIGHT / ROW_COUNT as f32)),
+                            // + (GAP_BETWEEN_CELLS * row as f32),
+                            0.0,
+                        ),
+                        scale: Vec3::splat(WINDOW_WIDTH / COLUMN_COUNT as f32),
+                        ..Default::default()
+                    },
                     ..Default::default()
                 },
                 Cell {
