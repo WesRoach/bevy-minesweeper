@@ -69,7 +69,7 @@ fn setup_camera(mut commands: Commands) {
 
 // The board is a grid of cells
 // Each cell is a square
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Cell {
     is_mine: bool,
     state: CellState,
@@ -77,16 +77,23 @@ struct Cell {
     position: Position,
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 struct Position {
     x: f32,
     y: f32,
 }
 
+#[derive(Component, Debug)]
 enum CellState {
     Hidden,
-    Revealed,
     Flagged,
+    Revealed(Revealed),
+}
+
+#[derive(Component, Debug)]
+enum Revealed {
+    Mine,
+    AdjacentMines(u8),
 }
 
 #[derive(Component)]
@@ -150,12 +157,14 @@ fn setup_board(mut commands: Commands) {
 
 // Emit a mouse left and/or right click event and capture the position of the mouse
 fn mouse_button_events(
-    mut mousebtn_event: EventReader<MouseButtonInput>, // query to get the window (so we can read the current cursor position)
+    mut event_mouse_button: EventReader<MouseButtonInput>, // query to get the window (so we can read the current cursor position)
     q_window: Query<&Window, With<PrimaryWindow>>,
     // query to get camera transform
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+    // query to get the cells
+    q_cells: Query<&Cell>,
 ) {
-    for ev in mousebtn_event.read() {
+    for ev in event_mouse_button.read() {
         match ev.state {
             ButtonState::Pressed => {
                 println!("Mouse button press: {:?}", ev.button);
@@ -179,6 +188,16 @@ fn mouse_button_events(
             .map(|ray| ray.origin.truncate())
         {
             println!("World coords: {}/{}", world_position.x, world_position.y);
+            // check if the cursor is inside a cell
+            for cell in q_cells.iter() {
+                if world_position.x >= cell.position.x
+                    && world_position.x <= cell.position.x + CELL_SIZE
+                    && world_position.y >= cell.position.y
+                    && world_position.y <= cell.position.y + CELL_SIZE
+                {
+                    println!("Cell clicked: {:?}", cell.position);
+                }
+            }
         }
     }
 }
